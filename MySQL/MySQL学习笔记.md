@@ -975,34 +975,11 @@ drop foreign key fk_t_user;
 
 + 多对多：例如t_stu和t_teacher表，即一个学生可以有多个老师，而一个老师也可以有多个学生。这种情况通常需要创建中间表来处理多对多关系。例如再创建一张表t_stu_tea表，给出两个外键，一个相对t_stu表的外键，另一个相对t_teacher表的外键。
 
-
-
-## 三、数据库引擎（待完善）
-
-​	mysql5.7支持的引擎：InnoDB,MyISAM,Momory,Merge等。
-
-```sql
-SHOW ENGINES;
-```
-
-### 1、InnoDB
-
-​	mysql默认引擎。
-
-​	事务型数据库的首选引擎，支持事务安全表（ACID），支持行锁定和外键。
-
-​	特性：
-
-1. InnoDB给MySQL提供了具有提交、回滚和崩溃恢复能力的事物安全（ACID兼容）存储引擎;
-2. nnoDB是为处理巨大数据量的最大性能设计;
-3. InnoDB存储引擎完全与MySQL服务器整合，InnoDB存储引擎为在主内存中缓存数据和索引而维持它自己的缓冲池;
-4. InnoDB支持外键完整性约束，存储表中的数据时，每张表的存储都按主键顺序存放，如果没有显示在表定义时指定主键，InnoDB会为每一行生成一个6字节的ROWID，并以此作为主键;
-5. InnoDB被用在众多需要高性能的大型数据库站点上;
-6. InnoDB不创建目录，使用InnoDB时，MySQL将在MySQL数据目录下创建一个名为ibdata1的10MB大小的自动扩展数据文件，以及两个名为ib_logfile0和ib_logfile1的5MB大小的日志文件。
+------
 
 
 
-## 四、索引
+## 三、索引
 
 ​	用于快速找出在某个列中由一定特性的行。若不用索引，mysql将从第一行开始全表扫描，知道找到相应的行。
 
@@ -1095,9 +1072,66 @@ ALTER TABLE t_user DROP INDEX idx_username;
 DROP INDEX idx_username_pwd ON t_user;
 ```
 
+------
+
+## 四、数据库引擎（待完善）
+
+​	mysql5.7支持的引擎：InnoDB,MyISAM,Momory,Merge等。
+
+```sql
+SHOW ENGINES;
+```
+
+### 1、InnoDB
+
+​	mysql默认引擎。
+
+​	事务型数据库的首选引擎，支持事务安全表（ACID），支持行锁定和外键。
+
+​	特性：
+
+1. InnoDB给MySQL提供了具有提交、回滚和崩溃恢复能力的事物安全（ACID兼容）存储引擎;
+2. nnoDB是为处理巨大数据量的最大性能设计;
+3. InnoDB存储引擎完全与MySQL服务器整合，InnoDB存储引擎为在主内存中缓存数据和索引而维持它自己的缓冲池;
+4. InnoDB支持外键完整性约束，存储表中的数据时，每张表的存储都按主键顺序存放，如果没有显示在表定义时指定主键，InnoDB会为每一行生成一个6字节的ROWID，并以此作为主键;
+5. InnoDB被用在众多需要高性能的大型数据库站点上;
+6. InnoDB不创建目录，使用InnoDB时，MySQL将在MySQL数据目录下创建一个名为ibdata1的10MB大小的自动扩展数据文件，以及两个名为ib_logfile0和ib_logfile1的5MB大小的日志文件。
 
 
 
+
+
+
+
+## 五、视图（待完善）
+
+
+
+
+
+## 六、触发器（待完善）
+
+
+
+
+
+## 七、用户管理（待完善）
+
+
+
+## 八、数据备份（待完善）
+
+
+
+
+
+## 九、日志（待完善）
+
+
+
+
+
+## 十、性能优化（待完善）
 
 
 
