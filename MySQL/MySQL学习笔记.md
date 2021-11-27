@@ -795,6 +795,8 @@ select * from emp limit 3,10;
 + 第二页记录起始行为10，一共查询10行；
 + 第三页记录起始行为20，一共查询10行；
 
+------
+
 
 
 ## 二、数据表的完整性约束
@@ -1074,7 +1076,514 @@ DROP INDEX idx_username_pwd ON t_user;
 
 ------
 
-## 四、数据库引擎（待完善）
+## 四、事务
+
+### 1、什么是事务
+
+​		**数据库中的事务是指对数据库执行一批操作，这些操作最终要么全部执行成功，要么全部失败。**
+
+```
+示例银行转账：
+	A->B账户转100元；
+过程：
+	A账户减100元，B账户加100元。
+有事务支持的2种结果：
+	1、操作成功：A账户减少100；B账户增加100；
+    2、操作失败：A、B两个账户都没有发生变化。
+没有事务的结果：
+	如果没有事务的支持，可能出现错：A账户减少了100，此时系统挂了，导致B账户没有加上100，而A账户凭空少了100。
+```
+
+### 2、事务的特性
+
+**原子性(Atomicity)**
+
+​		事务的整个过程如原子操作一样，最终要么全部成功，或者全部失败，这个原子性是从最终结果来看的，从最终结果来看这个过程是不可分割的。
+**一致性(Consistency)**
+
+​		事务开始之前、执行中、执行完毕，这些时间点，多个人去观察事务操作的数据的时候，看到的数据都是一致的；
+**隔离性(Isolation)**
+
+​		一个事务的执行不能被其他事务干扰。每个事务的执行过程是相对独立的；
+**持久性(Durability)**
+
+​		一个事务一旦提交，他对数据库中数据的改变就应该是永久性的。当事务提交之后，数据会持久化到硬盘；
+
+### 3、事务操作
+
+​		MYSQL中事务操作（隐式事务、显式事务）。
+
+#### 1、隐式事务
+
+​		mysql中事务默认是隐式事务，执行insert、update、delete操作的时候，数据库自动开启事务、提交、回滚事务。
+
+​		是否开启隐式事务是由变量`autocommit`控制的。
+
+```sql
+SHOW VARIABLES LIKE 'autocommit';
+```
+
+#### 2、显式事务
+
+​		事务需要手动开启、提交或回滚，由开发者自己控制。
+
+> 注意：navicat与DOS终端显式不一致，一下以DOS终端为主。
+
+**方式一：**
+
+```sql
+-- 关闭隐式事务
+set autocommit=0;
+
+-- 提交事务
+SHOW VARIABLES LIKE 'autocommit';
+SET autocommit=0;
+SHOW VARIABLES LIKE 'autocommit';
+INSERT INTO emp values(1,'MK','JAVA',0,'1980-12-17',0,NULL,0);
+SELECT * FROM emp WHERE empno = 1;
+COMMIT;
+
+-- 回滚事务
+INSERT INTO emp values(2,'emm','sql',0,'1980-12-17',0,NULL,0);
+SELECT * FROM emp WHERE empno = 2;
+ROLLBACK;
+
+-- 还原
+SET autocommit=1;
+SHOW VARIABLES LIKE 'autocommit';
+```
+
+**方式二：**
+
+```sql
+-- 开启显式事务（一次性使用，无需手动关闭~）
+START TRANSACTION;
+SHOW VARIABLES LIKE 'autocommit';
+
+-- 提交事务
+START TRANSACTION;
+INSERT INTO emp values(3,'emm1','sql',0,NULL,0,NULL,0);
+INSERT INTO emp values(4,'emm2','sql',0,NULL,0,NULL,0);
+SELECT * FROM emp WHERE empno IN (3,4);
+COMMIT;
+
+-- 回滚事务
+START TRANSACTION;
+DELETE FROM emp;
+SELECT * FROM emp;
+ROLLBACK;
+```
+
+**savepoint关键字**
+
+```sql
+START TRANSACTION;
+INSERT INTO emp values(7,'emm1','sql',0,NULL,0,NULL,0);
+-- 设置保存点part1
+SAVEPOINT part1;
+INSERT INTO emp values(8,'emm2','sql',0,NULL,0,NULL,0);
+SELECT * FROM emp WHERE empno IN (7,8);
+-- 回滚到保存点part1
+ROLLBACK TO part1;
+COMMIT;
+```
+
+**只读事务**
+
+​		事务执行的操作是一些查询操作，性能上可能会有优化。
+
+```sql
+-- 开启只读事务
+START TRANSACTION READ only;
+SELECT * FROM emp;
+-- 删除失败
+DELETE FROM emp;
+SELECT * FROM emp;
+COMMIT;
+-- 删除成功
+DELETE FROM emp;
+SELECT * FROM emp;
+```
+
+### 4、事务中的名词
+
+**脏读**
+
+​		一个事务在执行的过程中读取到了其他事务还没有提交的数据。
+**读已提交**
+
+​		一个事务操作过程中可以读取到其他事务已经提交的数据。
+
+​		事务中的每次读取操作，读取到的都是数据库中其他事务已提交的最新的数据
+**可重复读**
+
+​		一个事务操作中对于一个读取操作不管多少次，读取到的结果都是一样的。
+
+**幻读**
+
+​		幻读在可重复读的模式下才会出现，其他隔离级别中不会出现
+
+幻读现象例子：
+
+​		**可重复读模式**下，比如有个用户表，手机号码为主键，有两个事物进行如下操作
+
+事务A操作如下：
+1、打开事务
+2、查询号码为X的记录，不存在
+3、插入号码为X的数据，插入报错（为什么会报错，先向下看）
+4、查询号码为X的记录，发现还是不存在（由于是可重复读，所以读取记录X还是不存在的）
+
+事物B操作：在事务A第2步操作时插入了一条X的记录，所以会导致A中第3步插入报错（违反了唯一约束）
+
+上面操作对A来说就像发生了幻觉一样，明明查询X（A中第二步、第四步）不存在，但却无法插入成功
+
+> 幻读可以这么理解：事务中后面的操作（插入号码X）需要上面的读取操作（查询号码X的记录）提供支持，但读取操作却不能支持下面的操作时产生的错误，就像发生了幻觉一样。
+
+### 5、事务隔离等级
+
+​		当多个事务同时进行的时候，如何确保当前事务中数据的正确性，比如A、B两个事物同时进行的时候，A是否可以看到B已提交的数据或者B未提交的数据，这个需要依靠事务的隔离级别来保证，不同的隔离级别中所产生的效果是不一样的。
+
+​		事务隔离级别主要是解决了上面多个事务之间数据可见性及数据正确性的问题。
+
+**隔离级别分为4种：**
+
+1. **读未提交：READ-UNCOMMITTED**
+2. **读已提交：READ-COMMITTED**
+3. **可重复读：REPEATABLE-READ**
+4. **串行：SERIALIZABLE**
+
+**查看隔离等级**
+
+```sql
+-- 查看隔离等级
+show variables like 'transaction_isolation';
+-- 或
+show variables like 'tx_isolation';
+```
+
+**各种隔离级别中会出现的问题**
+
+| 隔离级别         | 脏读 | 不可重复读 | 幻读 |
+| ---------------- | ---- | ---------- | ---- |
+| READ-UNCOMMITTED | 有   | 有         | 无   |
+| READ-COMMITTED   | 无   | 有         | 无   |
+| REPEATABLE-READ  | 无   | 无         | 有   |
+| SERIALIZABLE     | 无   | 无         | 无   |
+
+**设置隔离等级**
+
+1、修改mysql中的my.init文件，我们将隔离级别设置为：READ-UNCOMMITTED，如下：
+
+```sql
+# 隔离级别设置,READ-UNCOMMITTED读未提交,READ-COMMITTED读已提交,REPEATABLE-READ可重复读,SERIALIZABLE串
+transaction-isolation=READ-UNCOMMITTED
+```
+
+DOS窗口：
+
+```dos
+# 重启数据库
+net stop mysql
+net start mysql
+```
+
+### 6、隔离等级演示
+
+#### 1、READ-UNCOMMITTED
+
+READ-UNCOMMITTED：读未提交
+
+| 时间 | 窗口A                | 窗口B                         |
+| ---- | -------------------- | ----------------------------- |
+| T1   | start transaction;   |                               |
+| T2   | select * from test1; |                               |
+| T3   |                      | start transaction;            |
+| T4   |                      | insert into test1 values (1); |
+| T5   |                      | select * from test1;          |
+| T6   | select * from test1; |                               |
+| T7   |                      | commit;                       |
+| T8   | commit;              |                               |
+
+A窗口：
+
+```sql
+mysql> start transaction;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select * from test1;
+Empty set (0.00 sec)
+
+mysql> select * from test1; #这里我们是能够看到b事务未提交的数据的
++------+
+| a    |
++------+
+|    1 |
++------+
+1 row in set (0.00 sec)
+
+mysql> commit;
+Query OK, 0 rows affected (0.00 sec)
+```
+
+B窗口：
+
+```
+mysql> start transaction;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> insert into test1 values (1);
+Query OK, 1 row affected (0.00 sec)
+
+mysql> select * from test1;
++------+
+| a    |
++------+
+|    1 |
++------+
+1 row in set (0.00 sec)
+
+mysql> commit;
+Query OK, 0 rows affected (0.00 sec)
+```
+
+**结论：读未提交情况下，可以读取到其他事务还未提交的数据，多次读取结果不一样，出现了脏读、不可重复读**
+
+#### 2、READ-COMMITTED
+
+READ-COMMITTED：读已提交
+
+| 时间 | 窗口A                | 窗口B                         |
+| ---- | -------------------- | ----------------------------- |
+| T1   | start transaction;   |                               |
+| T2   | select * from test1; |                               |
+| T3   |                      | start transaction;            |
+| T4   |                      | insert into test1 values (1); |
+| T5   |                      | select * from test1;          |
+| T6   | select * from test1; |                               |
+| T7   |                      | commit;                       |
+| T8   | commit;              |                               |
+
+A窗口：
+
+```
+mysql> start transaction;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select * from test1;
+Empty set (0.00 sec)
+
+mysql> select * from test1;  #b事务没有提交的数据是看不到；
+Empty set (0.00 sec)
+
+mysql> select * from test1; #这里读取到的是b事务已经提交的数据
++------+
+| a    |
++------+
+|    1 |
++------+
+1 row in set (0.00 sec)
+
+mysql> commit;
+Query OK, 0 rows affected (0.00 sec)
+```
+
+B窗口：
+
+```
+mysql> start transaction;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> insert into test1 values (1);
+Query OK, 1 row affected (0.00 sec)
+
+mysql> select * from test1;
++------+
+| a    |
++------+
+|    1 |
++------+
+1 row in set (0.00 sec)
+
+mysql> commit;
+Query OK, 0 rows affected (0.00 sec)
+```
+
+**结论：读已提交情况下，无法读取到其他事务还未提交的数据，可以读取到其他事务已经提交的数据，多次读取结果不一样，未出现脏读，出现了读已提交、不可重复读。**
+
+#### 3、REPEATABLE-READ
+
+REPEATABLE-READ：可重复读
+
+| 时间 | 窗口A                | 窗口B                         |
+| ---- | -------------------- | ----------------------------- |
+| T1   | start transaction;   |                               |
+| T2   | select * from test1; |                               |
+| T3   |                      | start transaction;            |
+| T4   |                      | insert into test1 values (1); |
+| T5   |                      | select * from test1;          |
+| T6   | select * from test1; |                               |
+| T7   |                      | commit;                       |
+| T8   | select * from test1; |                               |
+| T9   | commit;              |                               |
+| T10  | select * from test1; |                               |
+
+A窗口：
+
+```
+mysql> start transaction;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select * from test1;
+Empty set (0.00 sec)
+
+mysql> select * from test1;
+Empty set (0.00 sec)
+
+mysql> select * from test1;
+Empty set (0.00 sec)
+
+mysql> commit;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select * from test1;
++------+
+| a    |
++------+
+|    1 |
+|    1 |
++------+
+2 rows in set (0.00 sec)
+```
+
+B窗口：
+
+```
+mysql> start transaction;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> insert into test1 values (1);
+Query OK, 1 row affected (0.00 sec)
+
+mysql> select * from test1;
++------+
+| a    |
++------+
+|    1 |
+|    1 |
++------+
+2 rows in set (0.00 sec)
+
+mysql> commit;
+Query OK, 0 rows affected (0.00 sec)
+```
+
+**结论：可重复读情况下，未出现脏读，未读取到其他事务已提交的数据，多次读取结果一致，即可重复读。**
+
+
+
+> 幻读演示
+
+​		幻读只会在`REPEATABLE-READ`（可重复读）级别下出现，需要先把隔离级别改为可重复读。
+
+```sql
+mysql> create table t_user(id int primary key,name varchar(16) unique key);
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> insert into t_user values (1,'mysql'),(2,'mysql');
+ERROR 1062 (23000): Duplicate entry 'mysql' for key 'name'
+
+mysql> select * from t_user;
+Empty set (0.00 sec)
+```
+
+| 时间 | 窗口A                                                   | 窗口B                                         |
+| ---- | ------------------------------------------------------- | --------------------------------------------- |
+| T1   | start transaction;                                      |                                               |
+| T2   |                                                         | start transaction;                            |
+| T3   |                                                         | – 插入 insert into t_user values (1,‘mysql’); |
+| T4   |                                                         | select * from t_user;                         |
+| T5   | – 查看是否存在 select * from t_user where name=‘mysql’; |                                               |
+| T6   |                                                         | commit;                                       |
+| T7   | – 插入 insert into t_user values (2,‘mysql’);           |                                               |
+| T8   | – 查看是否存在 select * from t_user where name=‘mysql’; |                                               |
+| T9   | commit;                                                 |                                               |
+
+A窗：
+
+```
+mysql> start transaction;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> select * from t_user where name='mysql';
+Empty set (0.00 sec)
+
+mysql> insert into t_user values (2,'mysql');
+ERROR 1062 (23000): Duplicate entry 'mysql' for key 'name'
+mysql> select * from t_user where name='mysql';
+Empty set (0.00 sec)
+
+mysql> commit;
+Query OK, 0 rows affected (0.00 sec)
+```
+
+B窗：
+
+```
+mysql> start transaction;
+Query OK, 0 rows affected (0.00 sec)
+
+mysql> insert into t_user values (1,'mysql');
+Query OK, 1 row affected (0.00 sec)
+
+mysql> select * from t_user;
++----+---------------+
+| id | name          |
++----+---------------+
+|  1 | mysql   |
++----+---------------+
+1 row in set (0.00 sec)
+
+mysql> commit;
+Query OK, 0 rows affected (0.00 sec)
+```
+
+#### 4、SERIALIZABLE
+
+SERIALIZABLE：串行
+
+**SERIALIZABLE会让并发的事务串行执行。**
+
+| 时间 | 窗口A                | 窗口B                         |
+| ---- | -------------------- | ----------------------------- |
+| T1   | start transaction;   |                               |
+| T2   | select * from test1; |                               |
+| T3   |                      | start transaction;            |
+| T4   |                      | insert into test1 values (1); |
+| T5   | select * from test1; |                               |
+| T6   | commit;              |                               |
+| T7   |                      | commit;                       |
+
+按时间顺序运行上面的命令，会发现T4-B这样会被阻塞，直到T6-A执行完毕。
+
+**可以看出来，事务只能串行执行了。串行情况下不存在脏读、不可重复读、幻读的问题了。**
+
+### 7、关于隔离级别的选择
+
+1. 隔离级别越高，并发性也低，比如最高级别`SERIALIZABLE`会让事物串行执行，并发操作变成串行了，会导致系统性能直接降低。
+2. 具体选择哪种需要结合具体的业务来选择。
+3. 读已提交（READ-COMMITTED）通常用的比较多。
+
+------
+
+## 五、锁
+
+
+
+
+
+
+
+## ==四、数据库引擎（待完善）
 
 ​	mysql5.7支持的引擎：InnoDB,MyISAM,Momory,Merge等。
 
