@@ -2,6 +2,8 @@ package pers.mk.es.esjavawork.practice;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.index.IndexRequest;
@@ -31,7 +33,7 @@ public class DemoDoc {
     String type = "man";
 
     /**
-     * 新建文档
+     * 新建一个文档
      * @Author  kun.ma
      * @Date    2022/2/9 9:57
      * @Param   []
@@ -52,7 +54,7 @@ public class DemoDoc {
     }
 
     /**
-     * 更新文档
+     * 更新一个文档
      * @Author  kun.ma
      * @Date    2022/2/9 9:58
      * @Param   []
@@ -74,12 +76,66 @@ public class DemoDoc {
         System.out.println(update.getResult().toString());
     }
 
+    /**
+     * 删除一个文档
+     * @Author  kun.ma
+     * @Date    2022/2/9 10:14
+     * @Param   []
+     * @Return  void
+     */
     @Test
     public void deleteDoc() throws IOException {
         //1、封装request对象
         DeleteRequest request = new DeleteRequest(index, type, "1");
         //2、client执行
         DeleteResponse resp = client.delete(request, RequestOptions.DEFAULT);
+        //3、输出
+        System.out.println(resp);
+    }
+
+    /**
+     * 批量添加
+     * @Author  kun.ma
+     * @Date    2022/2/9 10:16
+     * @Param   []
+     * @Return  void
+     */
+    @Test
+    public void bulkCreateDoc() throws IOException {
+        //1、准备多个json数据
+        Person p1 = new Person(1, "张三1号", 23, new Date());
+        Person p2 = new Person(2, "张三2号", 22, new Date());
+        Person p3 = new Person(3, "张三3号", 24, new Date());
+        String json1 = mapper.writeValueAsString(p1);
+        String json2 = mapper.writeValueAsString(p2);
+        String json3 = mapper.writeValueAsString(p3);
+        //2、创建request，将准备好的数据封装
+        BulkRequest request = new BulkRequest();
+        request.add(new IndexRequest(index,type,p1.getId().toString()).source(json1,XContentType.JSON));
+        request.add(new IndexRequest(index,type,p2.getId().toString()).source(json2,XContentType.JSON));
+        request.add(new IndexRequest(index,type,p3.getId().toString()).source(json3,XContentType.JSON));
+        //3、执行
+        BulkResponse resp = client.bulk(request, RequestOptions.DEFAULT);
+        //4、输出
+        System.out.println(resp);
+    }
+
+    /**
+     * 批量删除
+     * @Author  kun.ma
+     * @Date    2022/2/9 10:28
+     * @Param   []
+     * @Return  void
+     */
+    @Test
+    public void bulkDeleteDoc() throws IOException {
+        //1、封装
+        BulkRequest request = new BulkRequest();
+        request.add(new DeleteRequest(index,type,"1"));
+        request.add(new DeleteRequest(index,type,"2"));
+        request.add(new DeleteRequest(index,type,"3"));
+        //2、client执行
+        BulkResponse resp = client.bulk(request, RequestOptions.DEFAULT);
         //3、输出
         System.out.println(resp);
     }
