@@ -2,7 +2,9 @@ package pers.mk.es.esjavawork.practice;
 
 import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
 import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
+import org.elasticsearch.action.support.master.AcknowledgedResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.settings.Settings;
@@ -18,7 +20,7 @@ import java.io.IOException;
  * @Author: kun.ma
  * @Date: 2022/2/8 16:59
  */
-public class Demo {
+public class DemoIndex {
     RestHighLevelClient client = ESUtils.getClient();
     String index = "person";
     String type = "man";
@@ -71,7 +73,7 @@ public class Demo {
      * @Return  void
      */
     @Test
-    public void exists() throws IOException {
+    public void existsIndex() throws IOException {
         //1、准备request对象
         GetIndexRequest request = new GetIndexRequest();
         request.indices(index);
@@ -79,6 +81,24 @@ public class Demo {
         boolean exists = client.indices().exists(request, RequestOptions.DEFAULT);
         //3、输出
         System.out.println(exists);
+    }
+
+    /**
+     * 删除索引
+     * @Author  kun.ma
+     * @Date    2022/2/9 9:02
+     * @Param   []
+     * @Return  void
+     */
+    @Test
+    public void deleteIndex() throws IOException {
+        //1、准备request对象
+        DeleteIndexRequest request = new DeleteIndexRequest();
+        request.indices(index);
+        //2、通过client对象执行
+        AcknowledgedResponse delete = client.indices().delete(request, RequestOptions.DEFAULT);
+        //3、返回
+        System.out.println(delete.isAcknowledged());
     }
 
 
