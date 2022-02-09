@@ -6,7 +6,7 @@ import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 
 /**
- * @Description: elasticsearch测试
+ * @Description: java连接es
  * @Author: kun.ma
  * @Date: 2022/2/8 16:52
  */

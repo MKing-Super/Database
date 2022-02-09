@@ -16,7 +16,7 @@ import pers.mk.es.esjavawork.utils.ESUtils;
 import java.io.IOException;
 
 /**
- * @Description: es练习
+ * @Description: 索引操作
  * @Author: kun.ma
  * @Date: 2022/2/8 16:59
  */
@@ -50,7 +50,7 @@ public class DemoIndex {
                 .endObject()
                 .startObject("birthday")
                 .field("type", "date")
-                .field("format", "yyyy-MM-dd")
+                .field("format", "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis")
                 .endObject()
                 .endObject()
                 .endObject();

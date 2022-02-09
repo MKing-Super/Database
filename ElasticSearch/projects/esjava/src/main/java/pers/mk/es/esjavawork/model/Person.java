@@ -1,0 +1,57 @@
+package pers.mk.es.esjavawork.model;
+
+import java.util.Date;
+
+/**
+ * @Description: 实体类
+ * @Author: kun.ma
+ * @Date: 2022/2/9 9:19
+ */
+public class Person {
+    private Integer id;
+    private String name;
+    private Integer age;
+    private Date birthday;
+
+    public Person() {
+    }
+
+    public Person(Integer id, String name, Integer age, Date birthday) {
+        this.id = id;
+        this.name = name;
+        this.age = age;
+        this.birthday = birthday;
+    }
+
+    public Integer getId() {
+        return id;
+    }
+
+    public void setId(Integer id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public Integer getAge() {
+        return age;
+    }
+
+    public void setAge(Integer age) {
+        this.age = age;
+    }
+
+    public Date getBirthday() {
+        return birthday;
+    }
+
+    public void setBirthday(Date birthday) {
+        this.birthday = birthday;
+    }
+}
