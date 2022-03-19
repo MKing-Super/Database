@@ -1,0 +1,2 @@
+windows 10:
+    redis.windows.conf && redis.windows-service.conf -> requirepass "你的密码"
