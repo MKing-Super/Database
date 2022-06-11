@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>发送ActiveMQ信息</title>
+</head>
+<body>
+接收信息
+<form id="receiveForm" action="/second-receive">
+    <input type="submit" value="提交">
+</form>
+<hr/>
+<div id="hidden-result" th:text="${result}"></div>
+
+<script>
+    var url = window.location.href;
+    var time = new Date();
+    // document.write(time);
+    setInterval(function () {
+        document.getElementById('receiveForm').submit();
+        // window.location.href = url;
+    },2000);
+</script>
+</body>
+</html>

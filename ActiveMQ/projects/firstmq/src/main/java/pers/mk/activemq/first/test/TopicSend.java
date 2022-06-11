@@ -1,16 +1,15 @@
 package pers.mk.activemq.first.test;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 import javax.jms.*;
 
-@Slf4j
+
 public class TopicSend {
 
     public static void main(String[] args) throws Exception {
         TestTopicProducer();
-        log.info("topic success send~");
+
     }
 
     public static void TestTopicProducer() throws Exception{

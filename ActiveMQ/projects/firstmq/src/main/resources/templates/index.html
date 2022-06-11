@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>发送ActiveMQ信息</title>
+</head>
+<body>
+输入你要发送的信息
+<form action="/text-message">
+    text message-><input name="textMessage">
+    <input type="submit" value="提交">
+</form>
+<hr/>
+<div th:text="${result}"></div>
+</body>
+</html>

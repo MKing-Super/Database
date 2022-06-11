@@ -1,16 +1,14 @@
 package pers.mk.activemq.first.test;
 
-import lombok.extern.slf4j.Slf4j;
 import org.apache.activemq.ActiveMQConnectionFactory;
 
 import javax.jms.*;
 
-@Slf4j
+
 public class QueueReceive {
 
     public static void main(String[] args) throws Exception {
         TestMQConsumerQueue();
-        log.info("Revice success~");
     }
 
     public static void TestMQConsumerQueue() throws Exception{
