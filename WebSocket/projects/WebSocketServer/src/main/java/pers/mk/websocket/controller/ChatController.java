@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.ResponseBody;
 import pers.mk.websocket.util.UserContant;
 
@@ -18,7 +19,7 @@ import pers.mk.websocket.util.UserContant;
 public class ChatController {
 
 
-    @GetMapping("/login")
+    @RequestMapping(value = "/login",method = RequestMethod.GET)
     @ResponseBody
     public String login(String userName){
         return "ee";

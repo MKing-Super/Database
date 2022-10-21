@@ -76,11 +76,9 @@
 
 
     function login() {
-        debugger
         $.ajax({
             type : 'get',
             url : '/chat/login',
-            dataType: 'json',
             async : true,
             data: {
                 'userName':$("#userName").val()
@@ -89,6 +87,11 @@
                 debugger
                 console.log(data)
                 alert(data)
+            },
+            error:function (err) {
+                debugger
+                console.log(err)
+                alert(err)
             }
         })
     }
