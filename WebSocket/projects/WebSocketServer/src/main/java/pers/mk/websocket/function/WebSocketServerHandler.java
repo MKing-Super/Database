@@ -1,6 +1,7 @@
 package pers.mk.websocket.function;
 
 import cn.hutool.core.date.DateUtil;
+import com.alibaba.fastjson.JSONObject;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -103,6 +104,15 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
         if (logger.isLoggable(Level.FINE)) {
             logger.fine(String.format("%s received %s", ctx.channel(), request));
         }
+        JSONObject param = null;
+        try {
+            param = JSONObject.parseObject(request);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+
+
         ctx.channel().write(
                 new TextWebSocketFrame(request
                         + " , 欢迎使用Netty WebSocket服务，现在时刻："
