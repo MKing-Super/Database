@@ -2,24 +2,26 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Netty WebSocket 时间服务器</title>
+    <title>chat room</title>
     <script src="jquery-1.9.1.min.js"></script>
 </head>
-<br>
 <body>
-<br>
 
 <div id="login-div">
-    <input type="text" placeholder="用户名" name="userName" id="userName" autocomplete="off">
-    <button id="login-button" value="登录" onclick="login()">登录</button>
-</div>
-<div id="chat-div">
     <form onsubmit="return false;">
+        <input type="text" name="type" value="login" hidden>
+        <input type="text" placeholder="用户名" name="message" id="userName" autocomplete="off">
+        <input type="button" id="login-button" value="登录" onclick="send(this.form)"/>
+    </form>
+</div>
+<hr/>
+<div id="chat-div" style="display: none">
+    <form onsubmit="return false;">
+        <input type="text" name="type" value="chat" hidden>
         <input type="text" id="message" name="message" placeholder="Netty最佳实践" />
-        <br><br>
-        <input type="button" value="发送WebSocket请求消息" onclick="send(this.form.message.value)"/>
+        <input type="button" value="发送WebSocket请求消息" onclick="send(this.form)"/>
         <hr color="blue"/>
-        <h3>服务端返回的应答消息</h3>
+        <h3>应答消息</h3>
         <textarea id="responseText" style="width:100%;height:300px;"></textarea>
     </form>
 </div>
@@ -33,8 +35,24 @@
     if (window.WebSocket) {
         socket = new WebSocket("ws://localhost:3333/websocket");
         socket.onmessage = function (event) {
+            var data = JSON.parse(event.data);
             var ta = document.getElementById('responseText');
-            ta.value = event.data + '\n\n' + ta.value;
+            switch (data.type) {
+                case 'login':
+                    var temp = data.message + ' -> 登录成功~ ' + data.time;
+                    ta.value = temp + '\n\n' + ta.value;
+                    document.getElementById('userName').disabled = true;
+                    document.getElementById('login-button').disabled = true;
+                    document.getElementById('chat-div').style.display = 'block';
+                    break;
+                case 'chat':
+                    var temp = data.userName + ' : ' + data.message + ' ' + data.time;
+                    ta.value = temp + '\n\n' + ta.value;
+                    break;
+                default:
+
+
+            }
         };
         socket.onopen = function (event) {
             var ta = document.getElementById('responseText');
@@ -50,16 +68,21 @@
         alert("抱歉，您的浏览器不支持WebSocket协议!");
     }
 
-    function send(message) {
+    function send(form) {
+        var jsonObject = {
+            'type':form.type.value,
+            'message':form.message.value
+        };
+        var jsonData = JSON.stringify(jsonObject);
         if (!window.WebSocket) {
             return;
         }
-        if (message === null || message === ''){
+        if (form.message.value === null || form.message.value === ''){
             alert('请填写内容！');
             return;
         }
         if (socket.readyState == WebSocket.OPEN) {
-            socket.send(message);
+            socket.send(jsonData);
             var ta = document.getElementById('message');
             ta.value = null;
         } else {

@@ -11,31 +11,28 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.FullHttpRequest;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpUtil;
-import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PingWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.PongWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketServerHandshaker;
-import io.netty.handler.codec.http.websocketx.WebSocketServerHandshakerFactory;
+import io.netty.handler.codec.http.websocketx.*;
 import io.netty.util.CharsetUtil;
+import lombok.extern.slf4j.Slf4j;
+import pers.mk.websocket.util.UserContant;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.logging.Level;
-import java.util.logging.Logger;
+
 
 /**
  * @Description: TODO
  * @Author: kun.ma
  * @Date: 2022/10/21 9:35
  */
+@Slf4j
 public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
 
-
-    private static final Logger logger = Logger
-            .getLogger(WebSocketServerHandler.class.getName());
-
     private WebSocketServerHandshaker handshaker;
+
+
+    private String userName = null;
 
 
     @Override
@@ -80,7 +77,6 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 
     private void handleWebSocketFrame(ChannelHandlerContext ctx,
                                       WebSocketFrame frame) {
-
         // 判断是否是关闭链路的指令
         if (frame instanceof CloseWebSocketFrame) {
             handshaker.close(ctx.channel(),
@@ -101,22 +97,42 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
 
         // 返回应答消息
         String request = ((TextWebSocketFrame) frame).text();
-        if (logger.isLoggable(Level.FINE)) {
-            logger.fine(String.format("%s received %s", ctx.channel(), request));
-        }
+//        if (logger.isLoggable(Level.FINE)) {
+//            logger.fine(String.format("%s received %s", ctx.channel(), request));
+//        }
         JSONObject param = null;
         try {
             param = JSONObject.parseObject(request);
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
         }
+        assert param != null;
+        log.info("json data -> {}", request);
+        String formatDate = DateUtil.format(new Date(), "yyyy-MM-dd HH:mm:ss");
+        switch (param.get("type").toString()) {
+            case "login":
+                userName = param.get("message").toString();
+                UserContant.onlineUserMap.put(param.get("message").toString(), ctx);
+                param.put("time",formatDate);
+                ctx.channel().write(new TextWebSocketFrame(param.toString()));
+                break;
+            case "chat":
+                for (ChannelHandlerContext used : UserContant.onlineUserMap.values()) {
+                    param.put("userName",userName);
+                    param.put("time",formatDate);
+                    used.channel().write(new TextWebSocketFrame(param.toString()));
+                    used.flush();
+                }
+//                ctx.channel().write(
+//                        new TextWebSocketFrame(request
+//                                + " , 欢迎使用Netty WebSocket服务，现在时刻："
+//                                + formatDate));
 
+                break;
+            default:
 
+        }
 
-        ctx.channel().write(
-                new TextWebSocketFrame(request
-                        + " , 欢迎使用Netty WebSocket服务，现在时刻："
-                        + DateUtil.format(new Date(),"yyyy-MM-dd HH:mm:ss")));
     }
 
     private static void sendHttpResponse(ChannelHandlerContext ctx,
