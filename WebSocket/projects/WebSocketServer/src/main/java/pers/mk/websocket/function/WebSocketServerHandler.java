@@ -18,6 +18,8 @@ import pers.mk.websocket.util.UserContant;
 
 import java.util.Collection;
 import java.util.Date;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 
 
@@ -117,17 +119,33 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
                 ctx.channel().write(new TextWebSocketFrame(param.toString()));
                 break;
             case "chat":
-                for (ChannelHandlerContext used : UserContant.onlineUserMap.values()) {
+                for (Map.Entry<String, ChannelHandlerContext> entry : UserContant.onlineUserMap.entrySet()){
                     param.put("userName",userName);
                     param.put("time",formatDate);
-                    used.channel().write(new TextWebSocketFrame(param.toString()));
-                    used.flush();
+                    entry.getValue().channel().write(new TextWebSocketFrame(param.toString()));
+                    boolean active = entry.getValue().channel().isActive();
+                    if (active){
+                        System.out.println(entry.getKey());
+                        entry.getValue().flush();
+                    }else {
+                        UserContant.onlineUserMap.remove(entry.getKey());
+                    }
                 }
-//                ctx.channel().write(
-//                        new TextWebSocketFrame(request
-//                                + " , 欢迎使用Netty WebSocket服务，现在时刻："
-//                                + formatDate));
-
+                break;
+            case "friends":
+                for (Map.Entry<String, ChannelHandlerContext> entry : UserContant.onlineUserMap.entrySet()){
+                    boolean active = entry.getValue().channel().isActive();
+                    if (active){
+                        entry.getValue().flush();
+                    }else {
+                        UserContant.onlineUserMap.remove(entry.getKey());
+                    }
+                }
+                for (Map.Entry<String, ChannelHandlerContext> entry : UserContant.onlineUserMap.entrySet()){
+                    Set<String> set = UserContant.onlineUserMap.keySet();
+                    param.put("activeFriends",set);
+                    entry.getValue().channel().write(new TextWebSocketFrame(param.toString()));
+                }
                 break;
             default:
 

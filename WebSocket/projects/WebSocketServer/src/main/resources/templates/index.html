@@ -5,7 +5,7 @@
     <title>chat room</title>
     <script src="jquery-1.9.1.min.js"></script>
 </head>
-<body>
+<body onclick="stopMsg()">
 
 <div id="login-div">
     <form onsubmit="return false;">
@@ -22,7 +22,8 @@
         <input type="button" value="发送WebSocket请求消息" onclick="send(this.form)"/>
         <hr color="blue"/>
         <h3>应答消息</h3>
-        <textarea id="responseText" style="width:100%;height:300px;"></textarea>
+        <textarea id="responseText" style="width:78%;height:300px;"></textarea>
+        <textarea id="active-friends" style="width:20%;height:300px;"></textarea>
     </form>
 </div>
 
@@ -48,6 +49,15 @@
                 case 'chat':
                     var temp = data.userName + ' : ' + data.message + ' ' + data.time;
                     ta.value = temp + '\n\n' + ta.value;
+                    message.showMessage('新消息');
+                    break;
+                case 'friends':
+                    var friends = document.getElementById('active-friends');
+                    friends.value = null;
+                    for (var ff of data.activeFriends){
+                        friends.value = ff + '\n' + friends.value;
+                    }
+                    friends.value = '在线好友↓↓↓↓↓↓' + '\n' + friends.value;
                     break;
                 default:
 
@@ -88,6 +98,45 @@
         } else {
             alert("WebSocket连接没有建立成功!");
         }
+    }
+
+    setInterval(function () {
+        var jsonObject = {
+            'type':'friends'
+        };
+        var jsonData = JSON.stringify(jsonObject);
+        socket.send(jsonData);
+    },1000);
+
+    let message = {
+        timeout: null,
+        oldTitle: document.title,
+        time: 0,
+        showMessage(msg){
+            message.timeout = setInterval(function(){
+                message.time ++;
+                let title = '';
+                if(message.time % 2 === 0){
+                    title = '【】';
+                }else{
+                    title = '【 ' + msg + ' 】';
+                }
+                document.title = title;
+            },600);
+
+        },
+        stopMessage(){
+            document.title = message.oldTitle;
+            clearTimeout(message.timeout);
+        }
+    };
+
+    function showMsg(){
+        message.showMessage('新消息');
+    }
+
+    function stopMsg(){
+        message.stopMessage('新消息');
     }
 </script>
 
