@@ -114,9 +114,13 @@ public class WebSocketServerHandler extends SimpleChannelInboundHandler<Object> 
         switch (param.get("type").toString()) {
             case "login":
                 userName = param.get("message").toString();
-                UserContant.onlineUserMap.put(param.get("message").toString(), ctx);
-                param.put("time",formatDate);
-                ctx.channel().write(new TextWebSocketFrame(param.toString()));
+                if (UserContant.onlineUserMap.containsKey(param.get("message").toString())){
+                    ctx.channel().close();
+                }else {
+                    UserContant.onlineUserMap.put(param.get("message").toString(), ctx);
+                    param.put("time",formatDate);
+                    ctx.channel().write(new TextWebSocketFrame(param.toString()));
+                }
                 break;
             case "chat":
                 for (Map.Entry<String, ChannelHandlerContext> entry : UserContant.onlineUserMap.entrySet()){
